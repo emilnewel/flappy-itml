@@ -48,9 +48,14 @@ class FlappyAgent:
             and needs to be sufficiently fast to not slow down the game.
         """
         print("state: %s" % state)
+        if (state['next_pipe_bottom_y'] > state['player_y']):
+            if(state['next_pipe_top_y'] < state['player_y']):
+                return 1
+        else:
+            return 0
         # TODO: change this to to policy the agent has learned
         # At the moment we just return an action uniformly at random.
-        return random.randint(0, 1) 
+        #return random.randint(0, 1) 
 
 def run_game(nb_episodes, agent):
     """ Runs nb_episodes episodes of the game with agent picking the moves.
