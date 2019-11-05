@@ -160,8 +160,8 @@ class FlappyAgent:
         """ Runs nb_episodes episodes of the game with agent picking the moves.
             An episode of FlappyBird ends with the bird crashing into a pipe or going off screen.
         """
-
         if not os.path.exists(self.name):
+            print(self.name)
             os.mkdir(self.name)
 
         reward_values = self.reward_values()        
@@ -254,7 +254,6 @@ class FlappyAgent:
                 env.reset_game()
                 nb_episodes -= 1
                 score = 0
-                # print(nb_episodes)
         
         avg_score = sum(scores) / float(len(scores))
         confidence_interval = st.t.interval(0.95, len(scores)-1, loc=np.mean(scores), scale=st.sem(scores))  

@@ -12,34 +12,31 @@ import sys
 import math
 import matplotlib.pyplot as plt
 
-
-
-
-class BestAgent6(FlappyAgent):
+class BestAgent(FlappyAgent):
     def __init__(self, name):
         FlappyAgent.__init__(self, name)
 
-        self.player_pipe_difference_bins = np.linspace(13, 76, 3)
+        self.bird_pipe_difference_bins = np.linspace(13, 76, 3)
 
     
     def state_tf(self, state):
 
-        player_y = state["player_y"]
-        player_vel = state["player_vel"]
+        bird_y = state["player_y"]
+        bird_vel = state["player_vel"]
         pipe_top_y = state["next_pipe_top_y"]
 
-        player_pipe_difference = player_y - pipe_top_y
+        bird_pipe_difference = bird_y - pipe_top_y
 
-        player_pipe_difference_bin = np.digitize([player_pipe_difference], self.player_pipe_difference_bins)[0]
+        bird_pipe_difference_bin = np.digitize([bird_pipe_difference], self.bird_pipe_difference_bins)[0]
 
-        if player_vel <= -8:
-            player_vel = 0
-        elif player_vel > 0:
-            player_vel = 2
+        if bird_vel <= -8:
+            bird_vel = 0
+        elif bird_vel > 0:
+            bird_vel = 2
         else:
-            player_vel = 1
+            bird_vel = 1
 
-        return (player_pipe_difference_bin, player_vel)
+        return (bird_pipe_difference_bin, bird_vel)
 
     
     def observe(self, s1, a, r, s2, end):
@@ -54,7 +51,7 @@ class BestAgent6(FlappyAgent):
 
         # Count episodes
         if end:
-            self.episode_count += 1
+            self.num_of_episodes += 1
 
 
     def learn_from_observation(self, s1, a, r, s2):        
@@ -80,25 +77,14 @@ class BestAgent6(FlappyAgent):
         else:
             return 5
 
+agent = BestAgent6('best_agent')
 
-    
-name = "best_agent_6"
-
-try:
-    name += "_{}".format(sys.argv[2])
+try:    # If agent already exists, load it's snapshot and use it.
+    with open('best_agent/agent.pkl', 'rb') as f:
+        agent = pickle.load(f)
+        print('Running snapshot {}'.format(agent.num_of_episodes))
 except:
     pass
 
-agent = BestAgent6(name)
-
-try:
-    with open("{}/agent.pkl".format(name), "rb") as f:
-        agent = pickle.load(f)
-        print("Running snapshot {}".format(agent.episode_count))
-except:
-    if sys.argv[1] == "plot":
-        print("No data available to plot")
-        quit()
-    print("Starting new {} agent".format(name))
-
-agent.run(sys.argv[1]) # Use 'train', 'play', 'score' or 'plot'
+# Otherwise start a new one.
+agent.run(sys.argv[1]) #Either 'train' or 'play' should be passed to argv

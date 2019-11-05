@@ -35,7 +35,7 @@ class MonteCarlo(FlappyAgent):
         # If end of episode, learn from the episode, and clear the list of states.
         if end:
             self.learn_from_episode(self.episode)
-            self.episode_count += 1
+            self.num_of_episodes += 1
             self.episode = []
 
 
@@ -53,7 +53,7 @@ agent = MonteCarlo('opmc')
 try:    # If agent already exists, load it's snapshot and use it.
     with open('opmc/agent.pkl', 'rb') as f:
         agent = pickle.load(f)
-        print('Running snapshot {}'.format(agent.episode_count))
+        print('Running snapshot {}'.format(agent.num_of_episodes))
 except:
     pass
 
