@@ -9,31 +9,30 @@ class MonteCarlo(FlappyAgent):
         FlappyAgent.__init__(self, name)
         
         self.episode = []
-        self.player_y_bins = np.linspace(0, 512, 15)
-        self.player_vel_bins = np.linspace(-8, 10, 15)
+        self.bird_y_bins = np.linspace(0, 512, 15)
+        self.bird_vel_bins = np.linspace(-8, 10, 15)
         self.next_pipe_dist_bins = np.linspace(0, 288, 15)
         self.next_pipe_top_bins = np.linspace(0, 512, 15)
-  
-    
-    def map_state(self, state):
-
-        player_y = np.digitize([state['player_y']], self.player_y_bins)[0]
-        player_vel = np.digitize([state['player_vel']], self.player_vel_bins)[0]
-        next_pipe_dist_to_player = np.digitize([state['next_pipe_dist_to_player']], self.next_pipe_dist_bins)[0]
+        
+    #Tranform the state into what we're supposed to use
+    def state_tf(self, state):
+        bird_y = np.digitize([state['player_y']], self.bird_y_bins)[0]
         next_pipe_top = np.digitize([state['next_pipe_top_y']], self.next_pipe_top_bins)[0]
+        next_pipe_dist_to_player = np.digitize([state['next_pipe_dist_to_player']], self.next_pipe_dist_bins)[0]
+        bird_vel = np.digitize([state['player_vel']], self.bird_vel_bins)[0]
+        
+        return (bird_y, next_pipe_top, next_pipe_dist_to_player, bird_vel)
 
-        return (player_y, player_vel, next_pipe_dist_to_player, next_pipe_top)
 
-    
     def observe(self, s1, a, r, s2, end):
 
-        s1 = self.map_state(s1)
+        s1 = self.state_tf(s1)
         self.episode.append((s1, a, r))
         
         # count for graphs
         self.update_counts((s1, a))
 
-        # 2. if reached the end of episode, learn from it, then reset
+        # If end of episode, learn from the episode, and clear the list of states.
         if end:
             self.learn_from_episode(self.episode)
             self.episode_count += 1
@@ -41,13 +40,13 @@ class MonteCarlo(FlappyAgent):
 
 
     def learn_from_episode(self, episode):        
-        G = 0
+        tot_reward = 0
         for s, a, r in reversed(episode):
-            G = r + self.gamma * G
+            tot_reward = r + self.gamma * tot_reward
             if (s, a) in self.Q:
-                self.Q[(s, a)] = self.Q[(s, a)] + self.learning_rate * (G - self.Q[(s, a)]) # update rule
+                self.Q[(s, a)] = self.Q[(s, a)] + self.learning_rate * (tot_reward - self.Q[(s, a)]) # update rule
             else:
-                self.Q[(s, a)] = G # initialize to the first example
+                self.Q[(s, a)] = tot_reward # initialize to the first example
     
 agent = MonteCarlo('opmc')
 

@@ -36,7 +36,7 @@ class FlappyAgent:
         return {'positive': 1.0, 'tick': 0.0, 'loss': -5.0}
     
 
-    def map_state(self, state):
+    def state_tf(self, state):
         pass
 
 
@@ -86,7 +86,7 @@ class FlappyAgent:
             training_policy is called once per frame in the game while training
         """
 
-        state = self.map_state(state)
+        state = self.state_tf(state)
 
         greedy = np.random.choice([False, True], p=[self.epsilon, 1-self.epsilon])
 
@@ -108,7 +108,7 @@ class FlappyAgent:
             and needs to be sufficiently fast to not slow down the game.
         """
 
-        state = self.map_state(state)
+        state = self.state_tf(state)
         action = self.get_argmax_a(state)
         return action
 

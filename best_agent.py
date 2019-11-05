@@ -22,7 +22,7 @@ class BestAgent6(FlappyAgent):
         self.player_pipe_difference_bins = np.linspace(13, 76, 3)
 
     
-    def map_state(self, state):
+    def state_tf(self, state):
 
         player_y = state["player_y"]
         player_vel = state["player_vel"]
@@ -44,8 +44,8 @@ class BestAgent6(FlappyAgent):
     
     def observe(self, s1, a, r, s2, end):
 
-        s1 = self.map_state(s1)
-        s2 = self.map_state(s2)
+        s1 = self.state_tf(s1)
+        s2 = self.state_tf(s2)
         
         # count for graphs
         self.update_counts((s1, a))
