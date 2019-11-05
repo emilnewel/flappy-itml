@@ -8,9 +8,6 @@ import numpy as np
 import scipy.stats as st
 import os.path
 import os
-import matplotlib.pyplot as plt
-import seaborn as sns
-import threading
 
 
 
@@ -18,11 +15,10 @@ class FlappyAgent:
     def __init__(self, name):
         self.name = name
         self.Q = {}
-
-        self.lr = 0.1 # learning rate
-        self.e = 0.1 # epsilon / exploration
         self.gamma = 1 # discount
- 
+        self.learning_rate = 0.1
+        self.epsilon = 0.1
+        
         # For graphs
         self.s_a_counts = {}
         self.episode_count = 0
@@ -41,7 +37,7 @@ class FlappyAgent:
     
 
     def map_state(self, state):
-        return state
+        pass
 
 
     def observe(self, s1, a, r, s2, end):
@@ -54,21 +50,6 @@ class FlappyAgent:
             from the first call.
         """
         pass
-
-
-    def get_max_a(self, state):
-        G0 = self.Q.get((state, 0))
-        G1 = self.Q.get((state, 1))
-
-        if G0 is None:
-            G0 = 0
-        if G1 is None:
-            G1 = 0
-
-        if G0 > G1:
-            return G0
-        else:
-            return G1
 
 
     def get_argmax_a(self, state):
@@ -95,7 +76,9 @@ class FlappyAgent:
             self.s_a_counts[s_a] = 1
         self.frame_count += 1
        
-
+    def get_initial_return_value(self, state, action):
+        return 0
+    
     def training_policy(self, state):
         """ Returns the index of the action that should be done in state while training the agent.
             Possible actions in Flappy Bird are 0 (flap the wing) or 1 (do nothing).
@@ -105,7 +88,7 @@ class FlappyAgent:
 
         state = self.map_state(state)
 
-        greedy = np.random.choice([False, True], p=[self.e, 1-self.e])
+        greedy = np.random.choice([False, True], p=[self.epsilon, 1-self.epsilon])
 
         action = 0
         if greedy:
@@ -128,6 +111,20 @@ class FlappyAgent:
         state = self.map_state(state)
         action = self.get_argmax_a(state)
         return action
+
+    def get_max_a(self, state):
+        G0 = self.Q.get((state, 0))
+        G1 = self.Q.get((state, 1))
+
+        if G0 is None:
+            G0 = self.get_initial_return_value(state, 0)
+        if G1 is None:
+            G1 = self.get_initial_return_value(state, 1)
+
+        if G0 > G1:
+            return G0
+        else:
+            return G1
 
     def make_df(self):
         d = {}
@@ -192,7 +189,7 @@ class FlappyAgent:
                 score = 0
 
             if self.frame_count % 25000 == 0:
-                print('==========================')
+                print('++++++++++++++++++++++++++')
                 
                 print('episodes done: {}'.format(self.episode_count))
                 print('frames done: {}'.format(self.frame_count))
@@ -202,7 +199,7 @@ class FlappyAgent:
                 with open('{}/agent.pkl'.format(self.name), 'wb') as f:
                     pickle.dump((self), f, pickle.HIGHEST_PROTOCOL)
 
-                print('==========================')
+                print('++++++++++++++++++++++++++')
 
     def play(self):
         print('Playing {} agent after training for {} episodes or {} frames'.format(self.name, self.episode_count, self.frame_count))
@@ -284,11 +281,10 @@ class FlappyAgent:
                 if score >= 50:
                     count += 1
             if count >= len(scores) * 0.9:
-                print('*** over 50 score in {} frames ***'.format(self.frame_count))
+                print('\n REACHED 50 PIPES IN {} FRAMES \n'.format(self.frame_count))
                 with open('pass_50.csv', 'a') as f:
                     f.write('{},{}\n'.format(self.name, self.frame_count))
         else:
             with open('scores.txt', 'a') as f:
                 for score in scores:
                     f.write('{},{}\n'.format(self.name, score))
-            
