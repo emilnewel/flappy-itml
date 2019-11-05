@@ -1,28 +1,17 @@
-from flappy_agent import FlappyAgent
-
-from ple.games.flappybird import FlappyBird
-from ple import PLE
-import random
-
-import pickle
-import pandas as pd
-import numpy as np
-import scipy.stats as st
-import sys
-
+from flappy_agent import FlappyAgent    # Flappy agent
+import pickle                           # Used to load agent snapshots
+import numpy as np                      # For working with containers
+import sys                              # Used to read argv
 
 class QLearning(FlappyAgent):
     def __init__(self, name):
         FlappyAgent.__init__(self, name)
-
         self.player_y_bins = np.linspace(0, 512, 15)
         self.player_vel_bins = np.linspace(-8, 10, 15)
         self.next_pipe_dist_bins = np.linspace(0, 288, 15)
         self.next_pipe_top_bins = np.linspace(0, 512, 15)
-  
     
     def map_state(self, state):
-
         player_y = np.digitize([state['player_y']], self.player_y_bins)[0]
         player_vel = np.digitize([state['player_vel']], self.player_vel_bins)[0]
         next_pipe_dist_to_player = np.digitize([state['next_pipe_dist_to_player']], self.next_pipe_dist_bins)[0]
@@ -32,13 +21,11 @@ class QLearning(FlappyAgent):
 
     
     def observe(self, s1, a, r, s2, end):
-
         s1 = self.map_state(s1)
         s2 = self.map_state(s2)
         
         # count for graphs
         self.update_counts((s1, a))
-
         self.learn_from_observation(s1, a, r, s2)
 
         # Count episodes
@@ -56,18 +43,16 @@ class QLearning(FlappyAgent):
         G = r + self.gamma * self.get_max_a(s2) 
 
         # Update Q table
-        self.Q[(s1, a)] = Qs1a + self.lr * (G - Qs1a) # update rule
+        self.Q[(s1, a)] = Qs1a + self.learning_rate * (G - Qs1a)
     
 agent = QLearning('q_learning')
 
-try:
-    with open('{}/agent.pkl'.format('q_learning'), 'rb') as f:
+try:    # If agent already exists, load it's snapshot and use it.
+    with open('q_learning/agent.pkl', 'rb') as f:
         agent = pickle.load(f)
         print('Running snapshot {}'.format(agent.episode_count))
 except:
-    if sys.argv[1] == 'plot':
-        print('No data available to plot')
-        quit()
-    print('Starting new {} agent'.format('q_learning'))
+    pass
 
-agent.run(sys.argv[1]) # Use 'train', 'play', 'score' or 'plot'
+# Otherwise start a new one.
+agent.run(sys.argv[1]) #Either 'train' or 'play' should be passed to argv
