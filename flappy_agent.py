@@ -20,9 +20,9 @@ class FlappyAgent:
         self.epsilon = 0.1
         
         # For graphs
-        self.s_a_counts = {}
-        self.episode_count = 0
-        self.frame_count = 0
+        self.state_action_counter = {}
+        self.num_of_episodes = 0
+        self.num_of_frames = 0
     
 
     def reward_values(self):
@@ -70,11 +70,11 @@ class FlappyAgent:
 
 
     def update_counts(self, s_a):
-        if s_a in self.s_a_counts:
-            self.s_a_counts[s_a] += 1
+        if s_a in self.state_action_counter:
+            self.state_action_counter[s_a] += 1
         else:
-            self.s_a_counts[s_a] = 1
-        self.frame_count += 1
+            self.state_action_counter[s_a] = 1
+        self.num_of_frames += 1
        
     def get_initial_return_value(self, state, action):
         return 0
@@ -145,7 +145,7 @@ class FlappyAgent:
                 'y_difference':state[0] - state[3],
                 'action':self.get_argmax_a(state),
                 'return':G,
-                'count_seen':self.s_a_counts[(state, action)]}
+                'count_seen':self.state_action_counter[(state, action)]}
 
     def run(self, arg):
         if arg == 'train':
@@ -169,7 +169,7 @@ class FlappyAgent:
         env.init()
 
         score = 0
-        while self.frame_count <= 1000000:
+        while self.num_of_frames <= 1000000:
             # pick an action
             state1 = env.game.getGameState()
             action = self.training_policy(state1)
@@ -188,11 +188,11 @@ class FlappyAgent:
                 env.reset_game()
                 score = 0
 
-            if self.frame_count % 25000 == 0:
+            if self.num_of_frames % 25000 == 0:
                 print('++++++++++++++++++++++++++')
                 
-                print('episodes done: {}'.format(self.episode_count))
-                print('frames done: {}'.format(self.frame_count))
+                print('episodes done: {}'.format(self.num_of_episodes))
+                print('frames done: {}'.format(self.num_of_frames))
 
                 self.score()
 
@@ -202,7 +202,7 @@ class FlappyAgent:
                 print('++++++++++++++++++++++++++')
 
     def play(self):
-        print('Playing {} agent after training for {} episodes or {} frames'.format(self.name, self.episode_count, self.frame_count))
+        print('Playing {} agent after training for {} episodes or {} frames'.format(self.name, self.num_of_episodes, self.num_of_frames))
         reward_values = {'positive': 1.0, 'negative': 0.0, 'tick': 0.0, 'loss': 0.0, 'win': 0.0}
 
         env = PLE(FlappyBird(), fps=30, display_screen=True, force_fps=False, rng=None, reward_values=reward_values)
@@ -270,20 +270,20 @@ class FlappyAgent:
             # If file doesn't exist, add the header
             if not os.path.isfile(score_file):
                 with open(score_file, 'a') as f:
-                    f.write('avg_score,episode_count,frame_count,interval_lower,interval_upper,min,max\n')
+                    f.write('avg_score,episode_count,num_of_frames,interval_lower,interval_upper,min,max\n')
 
             # Append scores to the file
             with open(score_file, 'a') as f:
-                f.write('{},{},{},{},{},{},{}\n'.format(avg_score, self.episode_count, self.frame_count, confidence_interval[0], confidence_interval[1], min(scores), max(scores)))
+                f.write('{},{},{},{},{},{},{}\n'.format(avg_score, self.num_of_episodes, self.num_of_frames, confidence_interval[0], confidence_interval[1], min(scores), max(scores)))
 
             count = 0
             for score in scores:
                 if score >= 50:
                     count += 1
             if count >= len(scores) * 0.9:
-                print('\n REACHED 50 PIPES IN {} FRAMES \n'.format(self.frame_count))
+                print('\n REACHED 50 PIPES IN {} FRAMES \n'.format(self.num_of_frames))
                 with open('pass_50.csv', 'a') as f:
-                    f.write('{},{}\n'.format(self.name, self.frame_count))
+                    f.write('{},{}\n'.format(self.name, self.num_of_frames))
         else:
             with open('scores.txt', 'a') as f:
                 for score in scores:
