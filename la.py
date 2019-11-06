@@ -25,7 +25,7 @@ class LinearApproximation(FlappyAgent):
 
         if end:
             self.learn_from_episode(self.episode)
-            self.episode_count += 1
+            self.num_of_episodes += 1
             self.episode = []
     
     def learn_from_episode(self, episode):
@@ -43,7 +43,7 @@ try:    # If agent already exists, load it's snapshot and use it.
         agent = pickle.load(f)
         print('Running snapshot {}'.format(agent.episode_count))
 except:
-    pass
+    print('No agent snapshot exists, starting new one.')
 
 # Otherwise start a new one.
 agent.run(sys.argv[1]) #Either 'train' or 'play' should be passed to argv

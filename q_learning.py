@@ -23,12 +23,10 @@ class QLearning(FlappyAgent):
     def observe(self, s1, a, r, s2, end):
         s1 = self.state_tf(s1)
         s2 = self.state_tf(s2)
-        
-        # count for graphs
-        self.update_counts((s1, a))
+
         self.learn_from_observation(s1, a, r, s2)
 
-        # Count episodes
+        # Increment number of episodes on episode end
         if end:
             self.num_of_episodes += 1
 
@@ -52,7 +50,7 @@ try:    # If agent already exists, load it's snapshot and use it.
         agent = pickle.load(f)
         print('Running snapshot {}'.format(agent.num_of_episodes))
 except:
-    pass
+    print('No agent snapshot exists, starting new one.')
 
 # Otherwise start a new one.
 agent.run(sys.argv[1]) #Either 'train' or 'play' should be passed to argv

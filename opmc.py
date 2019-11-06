@@ -28,9 +28,6 @@ class MonteCarlo(FlappyAgent):
 
         s1 = self.state_tf(s1)
         self.episode.append((s1, a, r))
-        
-        # count for graphs
-        self.update_counts((s1, a))
 
         # If end of episode, learn from the episode, and clear the list of states.
         if end:
@@ -48,6 +45,7 @@ class MonteCarlo(FlappyAgent):
             else:
                 self.Q[(s, a)] = tot_reward # initialize to the first example
     
+    
 agent = MonteCarlo('opmc')
 
 try:    # If agent already exists, load it's snapshot and use it.
@@ -55,7 +53,7 @@ try:    # If agent already exists, load it's snapshot and use it.
         agent = pickle.load(f)
         print('Running snapshot {}'.format(agent.num_of_episodes))
 except:
-    pass
+    print('No agent snapshot exists, starting new one.')
 
 # Otherwise start a new one.
 agent.run(sys.argv[1]) #Either 'train' or 'play' should be passed to argv

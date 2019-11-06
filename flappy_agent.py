@@ -5,7 +5,6 @@ import random
 import pickle
 import pandas as pd
 import numpy as np
-import scipy.stats as st
 import os.path
 import os
 
@@ -53,21 +52,34 @@ class FlappyAgent:
 
 
     def get_argmax_a(self, state):
-        G0 = self.Q.get((state, 0))
-        G1 = self.Q.get((state, 1))
+        G1 = self.Q.get((state, 0))
+        G2 = self.Q.get((state, 1))
 
-        if G0 is None:
-            G0 = 0
         if G1 is None:
             G1 = 0
+        if G2 is None:
+            G2 = 0
 
-        if G0 == G1:
+        if G1 == G2:
             return random.randint(0, 1)
-        elif G0 > G1:
+        elif G1 > G2:
             return 0
         else:
             return 1
 
+    def get_max_a(self, state):
+        G1 = self.Q.get((state, 0))
+        G2 = self.Q.get((state, 1))
+
+        if G1 is None:
+            G1 = 0
+        if G2 is None:
+            G2 = 0
+
+        if G1 > G2:
+            return G1
+        else:
+            return G2
 
     def update_counts(self, s_a):
         if s_a in self.state_action_counter:
@@ -75,9 +87,6 @@ class FlappyAgent:
         else:
             self.state_action_counter[s_a] = 1
         self.num_of_frames += 1
-       
-    def get_initial_return_value(self, state, action):
-        return 0
     
     def training_policy(self, state):
         """ Returns the index of the action that should be done in state while training the agent.
@@ -112,41 +121,6 @@ class FlappyAgent:
         action = self.get_argmax_a(state)
         return action
 
-    def get_max_a(self, state):
-        G0 = self.Q.get((state, 0))
-        G1 = self.Q.get((state, 1))
-
-        if G0 is None:
-            G0 = self.get_initial_return_value(state, 0)
-        if G1 is None:
-            G1 = self.get_initial_return_value(state, 1)
-
-        if G0 > G1:
-            return G0
-        else:
-            return G1
-
-    def make_df(self):
-        d = {}
-        i = 0
-        for sa, G in self.Q.items():
-            
-            state = sa[0]
-            action = sa[1]
-            d[i] = self.state_to_dict(state, action, G)
-            i += 1
-
-        df = pd.DataFrame.from_dict(d, 'index')
-        return df.pivot_table(index='y_difference', columns='next_pipe_dist_to_player', values=['action', 'return', 'count_seen'])
-
-
-    def state_to_dict(self, state, action, G):
-        return {'next_pipe_dist_to_player':state[2],
-                'y_difference':state[0] - state[3],
-                'action':self.get_argmax_a(state),
-                'return':G,
-                'count_seen':self.state_action_counter[(state, action)]}
-
     def run(self, arg):
         if arg == 'train':
             self.train()
@@ -160,6 +134,8 @@ class FlappyAgent:
         """ Runs nb_episodes episodes of the game with agent picking the moves.
             An episode of FlappyBird ends with the bird crashing into a pipe or going off screen.
         """
+        #Check if the agent folder exists
+        #If not, create it.
         if not os.path.exists(self.name):
             print(self.name)
             os.mkdir(self.name)
@@ -174,9 +150,7 @@ class FlappyAgent:
             state1 = env.game.getGameState()
             action = self.training_policy(state1)
 
-            # step the environment
             reward = env.act(env.getActionSet()[action])
-            # print('reward=%d' % reward)
 
             state2 = env.game.getGameState()
 
@@ -191,15 +165,15 @@ class FlappyAgent:
             if self.num_of_frames % 25000 == 0:
                 print('++++++++++++++++++++++++++')
                 
-                print('episodes done: {}'.format(self.num_of_episodes))
-                print('frames done: {}'.format(self.num_of_frames))
+                print('Episodes finished: {}'.format(self.num_of_episodes))
+                print('Number of frames: {}'.format(self.num_of_frames))
 
                 self.score()
 
                 with open('{}/agent.pkl'.format(self.name), 'wb') as f:
                     pickle.dump((self), f, pickle.HIGHEST_PROTOCOL)
 
-                print('++++++++++++++++++++++++++')
+                print('++++++++++++++++++++++++++\n')
 
     def play(self):
         print('Playing {} agent after training for {} episodes or {} frames'.format(self.name, self.num_of_episodes, self.num_of_frames))
@@ -256,33 +230,20 @@ class FlappyAgent:
                 score = 0
         
         avg_score = sum(scores) / float(len(scores))
-        confidence_interval = st.t.interval(0.95, len(scores)-1, loc=np.mean(scores), scale=st.sem(scores))  
-        if np.isnan(confidence_interval[0]):
-            confidence_interval = (avg_score, avg_score)
-        
         print('Games played: {}'.format(total_episodes))
         print('Average score: {}'.format(avg_score))
-        print('95 confidence interval: {}'.format(confidence_interval))
 
         if training:
             score_file = '{}/scores.csv'.format(self.name)
             # If file doesn't exist, add the header
             if not os.path.isfile(score_file):
                 with open(score_file, 'a') as f:
-                    f.write('avg_score,episode_count,num_of_frames,interval_lower,interval_upper,min,max\n')
+                    f.write('avg_score,episode_count,num_of_frames,min,max\n')
 
             # Append scores to the file
             with open(score_file, 'a') as f:
-                f.write('{},{},{},{},{},{},{}\n'.format(avg_score, self.num_of_episodes, self.num_of_frames, confidence_interval[0], confidence_interval[1], min(scores), max(scores)))
-
-            count = 0
-            for score in scores:
-                if score >= 50:
-                    count += 1
-            if count >= len(scores) * 0.9:
-                print('\n REACHED 50 PIPES IN {} FRAMES \n'.format(self.num_of_frames))
-                with open('pass_50.csv', 'a') as f:
-                    f.write('{},{}\n'.format(self.name, self.num_of_frames))
+                f.write('{},{},{},{},{}\n'.format(avg_score, self.num_of_episodes, self.num_of_frames, min(scores), max(scores)))
+                
         else:
             with open('scores.txt', 'a') as f:
                 for score in scores:

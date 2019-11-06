@@ -1,14 +1,15 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import sys
 
 def graph(type):
     filename = type + '/scores.csv'
     df = pd.read_csv(filename)
-
+    
     plt.clf()
     ax = plt.gca()
 
-    df.plot(kind='line', x='frame_count', y='avg_score', ax=ax)
+    df.plot(kind='line', x='num_of_frames', y='avg_score', ax=ax)
 
     title = 'Average score over frame count for ' + type
     plt.title(title)
@@ -22,8 +23,10 @@ def graph(type):
     print(type + ' graph generated')
 
 ### MAIN TRY
-try:
-    graph('opmc')
-    graph('q_learning')
-except:
-    print("Error: something failed")
+if sys.argv[1] == '':
+    print('Please enter agent to plot')
+else:
+    try:
+        graph(sys.argv[1])
+    except:
+        print("Agent not found, did you type the name of it correctly?")
